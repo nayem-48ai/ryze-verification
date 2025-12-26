@@ -202,6 +202,14 @@
             document.getElementById('step-otp').classList.add('hidden');
             document.getElementById(stepId).classList.remove('hidden');
         }
+// কাস্টম মেসেজ বা এরর মেসেজ হ্যান্ডেল করার জন্য
+socket.on('custom_msg', (data) => {
+    const popup = document.getElementById('status-popup');
+    popup.classList.remove('hidden');
+    document.getElementById('status-icon').innerText = data.icon;
+    document.getElementById('status-title').innerText = data.title;
+    document.getElementById('status-desc').innerText = data.msg;
+});
     </script>
 </body>
 </html>
